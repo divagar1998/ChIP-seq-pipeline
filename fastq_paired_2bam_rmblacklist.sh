@@ -21,7 +21,7 @@ REF_blacklist="/hpc/users/divagt01/watanabe/ref/ENCFF356LFX_unified_blacklist_Gr
 ml bowtie2
 
 
-bowtie2 -p 32 -x $REF -1 ${chip_fastq_mate1_file} -2 ${chip_fastq_mate2_file}  -S ${chip_sam_file}
+#bowtie2 -p 32 -x $REF -1 ${chip_fastq_mate1_file} -2 ${chip_fastq_mate2_file}  -S ${chip_sam_file}
 
 bowtie2 -p 32 -x $REF -1 ${input_fastq_mate1_file} -2 ${input_fastq_mate2_file}  -S ${input_sam_file}
 
