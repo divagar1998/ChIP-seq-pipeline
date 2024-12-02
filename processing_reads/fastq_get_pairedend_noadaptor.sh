@@ -4,60 +4,30 @@
 
 set -euo pipefail
 
-#cell line
-cell_line=$1
-
 ml sratoolkit
 ml fastqc
-#vdb-config -i
+ml proxies
 
-# the SRA number of the ChIP data
-SRA=$2
+input_csv=$1
 
-# the SRA number of the input data
-SRA_input=$3
-
-# check if SRA data has already been downloaded
-if [ -e ./"${cell_line}"/"${SRA}_1".fastq.gz ]
-then
-        echo "SRA file exists"
-else
-        echo "SRA file does not exist"
-
-        # extract the fastq file
-        fasterq-dump --threads 32 --progress $SRA -O ./"${cell_line}"/
-        echo "fastq file downloaded"
-
+# col1 is directory for cell line, col2 is cell line, col3 is SRA for chip, col4 is SRA for input
+while IFS=, read -r col1 col2 col3 col4; do
+        mkdir -p $col1
+        cd $col1
+        fasterq-dump --threads 10 --progress $col3 -O .
+        fasterq-dump --threads 10 --progress $col4 -O .
+        
         #gunzip the fastq file
-        gzip --verbose ./"${cell_line}"/"${SRA}_1".fastq
-	gzip --verbose ./"${cell_line}"/"${SRA}_2".fastq
-        echo "fastq file gunzipped"
+        gzip --verbose ./"${col3}_R1.fastq"
+        gzip --verbose ./"${col3}_R2.fastq"
+	gzip --verbose ./"${col4}_R1.fastq"
+        gzip --verbose ./"${col4}_R2.fastq"
 
         # quality control of fastq file
-        fastqc -t 32 ./"${cell_line}"/"${SRA}_1".fastq.gz
-	fastqc -t 32 ./"${cell_line}"/"${SRA}_2".fastq.gz
-        echo "fastq file quality checked"
-fi
+        fastqc -t 10 ./"${col3}_R1.fastq.gz"
+        fastqc -t 10 ./"${col3}_R2.fastq.gz"
+	fastqc -t 10 ./"${col4}_R1.fastq.gz"
+        fastqc -t 10 ./"${col4}_R2.fastq.gz"
 
-# check if SRA input data has already been downloaded
-if [ -e ./"${cell_line}"/"${SRA_input}_1".fastq.gz ]
-then
-        echo "SRA file for input exists"
-else
-        echo "SRA file for input does not exist"
-
-        # extract the fastq file
-        fasterq-dump --threads 32 --progress $SRA_input -O ./"${cell_line}"/
-        echo "fastq file downloaded"
-
-        #gunzip the fastq file
-        gzip --verbose ./"${cell_line}"/"${SRA_input}_1".fastq
-	gzip --verbose ./"${cell_line}"/"${SRA_input}_2".fastq
-        echo "fastq file gunzipped"
-
-        # quality control of fastq file
-        fastqc -t 32 ./"${cell_line}"/"${SRA_input}_1".fastq.gz
-	fastqc -t 32 ./"${cell_line}"/"${SRA_input}_2".fastq.gz
-        echo "fastq file quality checked"
-fi
+done < $input_csv
 
