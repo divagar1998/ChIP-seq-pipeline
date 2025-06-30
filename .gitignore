@@ -1,2 +1,3 @@
-./hg38.chrom.sizes
-./copy_number_analysis/output
+/hg38.chrom.sizes
+/copy_number_analysis/input_cnv_calls/
+/copy_number_analysis/reference_genome_files/
