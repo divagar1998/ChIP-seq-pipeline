@@ -2,3 +2,8 @@
 /copy_number_analysis/input_cnv_calls/
 /copy_number_analysis/reference_genome_files/
 /copy_number_analysis/plots/.ipynb_checkpoints/
+/consensus_peaks/cMYC/
+/consensus_peaks/SCLC_N_ATAC/
+/consensus_peaks/SCLC_N_H3K27ac/
+/consensus_peaks/SCLC_N_H3K27me3/
+/consensus_peaks/SCLC_N_H3K4me3/
