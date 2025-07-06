@@ -1,22 +1,21 @@
 #! /bin/bash
-
-ml bedgraphtobigwig/2018-01-30
+# activate deeptools_env
+ml samtools
 
 input_csv=$1
-chrom_size=$2
 
-# CSV file has one column for bw file name, 
-# one column of path of bedgraph files,
-# one column of directory to ouput bw file
-while IFS=, read -r col1 col2 col3; do
-    cd $col3
-    # Sort the bedgraph file chromosome number and chromosome position
-    sort -k1,1 -k2,2n $col2 > temp.bdg
+# CSV file has one column for bam file path, 
 
-    bedGraphToBigWig temp.bdg $2 "${col1}.bw"
-
-    rm temp.bdg
-    
-done < $1
+while IFS=, read -r col1; do
+    samtools index $col1
+    file_name="${col1%.woblacklist.sorted.rmdup.bam}"
+    bamCoverage --bam $col1 -o "${file_name}_SeqDepthNorm.bw" \
+        --binSize 10 \
+        --normalizeUsing RPGC \
+        --effectiveGenomeSize 2913022398 \
+        --ignoreForNormalization chrX \
+        -p 5 \
+        --extendReads    
+done < ${input_csv}
 
 

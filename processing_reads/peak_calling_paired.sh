@@ -10,8 +10,8 @@ while IFS=, read -r col1 col2 col3 col4; do
     macs2 callpeak \
         -t  $col3 \
         -c  $col4 \
-        -g hs \
-        -n $col2    \
+        -g 2913022398 \
+        -n $col2 \
         -f BAMPE \
         -B \
         --keep-dup 'all' 

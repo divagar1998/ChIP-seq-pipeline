@@ -2,21 +2,22 @@
 set -euo pipefail
 
 # file path of the reference genome
-REF="/hpc/users/divagt01/watanabe/ref/grch38_1kgmaj"
+REF="~/watanabe/ref/grch38_1kgmaj"
 # file path of the blacklisted genes
-REF_blacklist="/hpc/users/divagt01/watanabe/ref/ENCFF356LFX_unified_blacklist_GrCh38.bed"
+REF_blacklist="~/watanabe/ref/ENCFF356LFX_unified_blacklist_GrCh38.bed"
 
 input_csv=$1
 
-ml bowtie2
+ml bowtie2/2.4.1
 ml samtools/1.17
-ml bedtools
+ml bedtools/2.29.0
 ml java
-ml picard
+ml picard/3.1.1
 ml openssl/1.0.2
 
 while IFS="," read -r cell_line;
 do
+    echo "Processing ${cell_line}"
     # Create arrays to hold R1 and R2 files
     R1_FILES=()
     R2_FILES=()
@@ -42,7 +43,7 @@ do
         R2="${R2_FILES[i]}"
 
         if [ ! -f "${R1%_R1_cutadapt.fastq.gz}_aligned.sam" ]; then
-            bowtie2 -p 30 -x $REF -1 "$R1" -2 "$R2" -S "${R1%_R1_cutadapt.fastq.gz}_aligned.sam"
+            bowtie2 -p 10 -x $REF -1 "$R1" -2 "$R2" -S "${R1%_R1_cutadapt.fastq.gz}_aligned.sam"
         else        
             echo "${R1%_R1_cutadapt.fastq.gz}_aligned.sam already exists"
         fi
@@ -51,7 +52,7 @@ do
 	    # only take reads that have quality score above 30
 
         if [ ! -f "${R1%_R1_cutadapt.fastq.gz}.sorted.bam" ]; then
-	        samtools view -q 31 -b "${R1%_R1_cutadapt.fastq.gz}_aligned.sam" | samtools sort -@ 30 -T "temp.bam" -o "${R1%_R1_cutadapt.fastq.gz}.sorted.bam"
+	        samtools view -q 31 -b "${R1%_R1_cutadapt.fastq.gz}_aligned.sam" | samtools sort -@ 10 -T "temp.bam" -o "${R1%_R1_cutadapt.fastq.gz}.sorted.bam"
 
             # index bam file
 	        samtools index "${R1%_R1_cutadapt.fastq.gz}.sorted.bam"
@@ -60,11 +61,9 @@ do
         fi
         
         # remove blacklisted regions
-        bedtools intersect -abam "${R1%_R1_cutadapt.fastq.gz}.sorted.bam" -b $REF_blacklist -v | samtools sort -@ 30 -o "${R1%_R1_cutadapt.fastq.gz}.woblacklist.sorted.bam" 
+        bedtools intersect -abam "${R1%_R1_cutadapt.fastq.gz}.sorted.bam" -b $REF_blacklist -v | samtools sort -@ 10 -o "${R1%_R1_cutadapt.fastq.gz}.woblacklist.sorted.bam" 
 
-        # move the sam file to archives
-        mv "${R1%_R1_cutadapt.fastq.gz}_aligned.sam" /sc/arion/scratch/divagt01
-
+        echo "removing duplicates from ${R1%_R1_cutadapt.fastq.gz}.woblacklist.sorted.bam"
         #remove duplicate reads
         java \
         -jar $PICARD \
@@ -73,6 +72,9 @@ do
         OUTPUT="${R1%_R1_cutadapt.fastq.gz}.woblacklist.sorted.rmdup.bam" \
         METRICS_FILE="${R1%_R1_cutadapt.fastq.gz}.woblacklist.sorted.rmdup.txt" \
         REMOVE_DUPLICATES=true
+
+        # remove the sam file 
+        rm "${R1%_R1_cutadapt.fastq.gz}_aligned.sam" 
 
     done
 
